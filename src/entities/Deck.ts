@@ -2,15 +2,21 @@ import { ICard, ICardType, ICardColor } from '../types/card'
 import { Player } from '../types/players'
 import { shuffleArray } from '../utils/shuffle'
 import { randomNumber } from '../utils/randomNumber'
+import { GameState } from '../types/game'
 
 export class Deck {
 	private gameDeck: ICard[] = [];
 	private playDeck: ICard[] = [];
 
-	public constructor () {
-		this.createDeck()
-		this.suffleDeck()
-		this.generatePlayDeck()
+	public constructor (gameDeck?:ICard[], playDeck?:ICard[]) {
+		if (this.gameDeck.length === 0) {
+			this.createDeck()
+			this.suffleDeck()
+			this.generatePlayDeck()
+		} else {
+			this.gameDeck = gameDeck || []
+			this.playDeck = playDeck || []
+		}
 	}
 
 	private createDeck () {
@@ -67,7 +73,8 @@ export class Deck {
 		this.gameDeck.push(card)
 	}
 
-	public dealCards = (players:Player[]) => {
+	public dealCards = (state: GameState) => {
+		const players = state.players
 		players.forEach(player => {
 			player.cards = this.gameDeck.splice(0, 7)
 		})
@@ -88,5 +95,9 @@ export class Deck {
 
 	public getPlayDeck = () => {
 		return this.playDeck
+	}
+
+	public getDeck = () => {
+		return this.gameDeck
 	}
 }
