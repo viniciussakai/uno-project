@@ -5,10 +5,10 @@ import SocketServer from './utils/socket'
 import socketController from './controller/socketController'
 import { instrument } from '@socket.io/admin-ui'
 
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 3333
 const server = http.createServer(app)
 
-app.use(cors({ origin: 'http://localhost:3001/' }))
+app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:3001', 'https://admin.socket.io/'] }))
 
 app.get('/', (req, res) => {
 	return res.send({ name: '' })

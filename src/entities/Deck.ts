@@ -50,19 +50,19 @@ export class Deck {
 		shuffleArray(this.gameDeck)
 	}
 
-	private generatePlayDeck = () => {
-		let card = this.getRandomCard()
+ 	private generatePlayDeck = () => {
+ 		let card = this.getRandomCard()
 
-		while (card.type !== ICardType.NUMBER) {
-			card = this.getRandomCard()
-		}
+ 		while (card.type !== ICardType.NUMBER) {
+ 			card = this.getRandomCard()
+ 		}
 
-		const cardIndex = this.gameDeck.findIndex((cardItem) => {
+ 		const cardIndex = this.gameDeck.findIndex((cardItem) => {
 		 return	cardItem === card
-		})
+ 		})
 
-		this.playDeck = this.gameDeck.splice(cardIndex, 1)
-	}
+ 		this.playDeck = this.gameDeck.splice(cardIndex, 1)
+ 	}
 
 	private getRandomCard = () => {
 		const random = randomNumber(this.gameDeck.length)

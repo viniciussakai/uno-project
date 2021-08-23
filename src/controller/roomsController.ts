@@ -1,7 +1,6 @@
 import socket from 'socket.io'
 import { Game } from '../entities/Game'
 import { GameState } from '../types/game'
-import { makeid } from '../utils/randomString'
 
 type GlobalStateMap= Map<string, GameState>;
 
@@ -16,17 +15,59 @@ export class RoomsController {
 		this.server = server
 	}
 
-  public handleNewGame = () => {
-  	const roomName = makeid(5)
+	public getRooms=() => {
+		const mapRooms = RoomsController.globalState
+
+		const rooms = [{}]
+
+		mapRooms.forEach((value, key) => {
+			rooms.push({ name: key, players: value.players.length })
+		})
+
+		rooms.shift()
+
+		return rooms
+	}
+
+	public getPlayers = () => {
+		const roomName = RoomsController.clientRooms.get(this.client.id)
+		if (!roomName) {
+			return
+		}
+
+		const state = RoomsController.globalState.get(roomName) || {} as GameState
+
+		const players = [{}]
+
+		state.players.forEach(player => {
+			players.push(player.name)
+		})
+
+		players.shift()
+		return players
+	}
+
+  public handleNewGame = (roomName) => {
+  	const room = this.server.sockets.adapter.rooms.has(roomName)
+
+  	if (room) {
+  		this.client.emit('roomExists')
+  		return
+  	}
 
   	RoomsController.clientRooms.set(this.client.id, roomName)
   	this.client.emit('gameCode', roomName)
 
   	RoomsController.globalState.set(roomName, new Game().initGame())
 
+  	this.client.broadcast.emit('newRoom', JSON.stringify(this.getRooms()))
+  	this.client.emit('goLobby', roomName)
+
   	this.client.join(roomName)
   	this.client.data.playerId = 1
   	this.client.emit('init', 1)
+
+  	this.client.emit('newPlayer', JSON.stringify(this.getPlayers()))
   }
 
 	public handleJoinGame= (roomName) => {
@@ -35,12 +76,13 @@ export class RoomsController {
 		let numClients = 0
 		if (room) {
 			numClients = room.size
+			console.log(numClients)
 		}
 
 		if (numClients === 0) {
 			this.client.emit('unknownCode')
 			return
-		} else if (numClients > 4) {
+		} else if (numClients > 3) {
 			this.client.emit('tooManyPlayers')
 			return
 		}
@@ -51,7 +93,17 @@ export class RoomsController {
 		this.client.data.playerId = numClients + 1
 		this.client.emit('init', numClients + 1)
 
-		this.startGameInterval(roomName)
+		const state = RoomsController.globalState.get(roomName) || {} as GameState
+
+		state.players.push({ cards: [], name: `player${numClients + 1}` })
+		RoomsController.globalState.set(roomName, state)
+
+		this.client.emit('goLobby', roomName)
+		this.server.sockets.in(roomName).emit('newPlayer', JSON.stringify(this.getPlayers()))
+
+		if (numClients === 3) {
+			this.startGameInterval(roomName)
+		}
 	}
 
 	public handleSendCard= (sendCard) => {

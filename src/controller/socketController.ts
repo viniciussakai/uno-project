@@ -13,13 +13,17 @@ class SocketController {
 
 			client.emit('ready')
 
+			client.on('getRooms', () => {
+				client.emit('rooms', JSON.stringify(room.getRooms()))
+			})
+
 			client.on('join', (roomName) => {
 				room.handleJoinGame(roomName)
 				client.broadcast.emit('new room', roomName)
 			})
 
-			client.on('newGame', () => {
-				room.handleNewGame()
+			client.on('newGame', (roomName) => {
+				room.handleNewGame(roomName)
 			})
 		})
 	}
